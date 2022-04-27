@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 
 uid=$(id -u)
-# Execution command.
-backrest_command="pgbackrest"
 
 if [ "${uid}" = "0" ]; then
-    # Exec pgBackRest from specific user.
-    backrest_command="gosu ${BACKREST_USER} pgbackrest"
     # Custom time zone.
     if [ "${TZ}" != "Etc/UTC" ]; then
         cp /usr/share/zoneinfo/${TZ} /etc/localtime
@@ -29,9 +25,28 @@ if [ "${uid}" = "0" ]; then
         /etc/pgbackrest
 fi
 
+command_prefix=""
+
 if [ "${uid}" = "0" ]; then
-    exec gosu ${BACKREST_USER} "$@"
+    command_prefix="gosu ${BACKREST_USER}"
+fi
+
+if [ "$1" = "restore" ]; then
+    exec ${command_prefix} pgbackrest --stanza=pg --log-level-console=info restore
+    if [ "$?" = "0" ]; then
+        echo "Restore was successful"
+    fi
+elif [ "$1" = "full-backup" ]; then
+    exec ${command_prefix} pgbackrest --stanza=pg --log-level-console=info --type=full backup
+    if [ "$?" = "0" ]; then
+        echo "Full backup was successful"
+    fi
+elif [ "$1" = "diff-backup" ]; then
+    exec ${command_prefix} pgbackrest --stanza=pg --log-level-console=info --type=diff backup
+    if [ "$?" = "0" ]; then
+        echo "Differential backup was successful"
+    fi
 else
-    exec "$@"
+    exec ${command_prefix} "$@"
 fi
 

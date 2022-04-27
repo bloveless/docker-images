@@ -30,6 +30,7 @@ ARG TZ
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         postgresql-client \
+        tzdata \
         libxml2 \
     && apt-get autoremove -y \
     && apt-get clean \
