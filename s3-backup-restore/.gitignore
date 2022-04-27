@@ -1,0 +1,6 @@
+.idea
+.DS_Store
+test-data
+tmp
+docker/dev-secrets/*
+!docker/dev-secrets/.gitkeep

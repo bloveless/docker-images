@@ -1,0 +1,41 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  annotations:
+  name: ecr-cred-helper-cronjob-rust
+  namespace: utils
+spec:
+  suspend: false
+  schedule: "0 */8 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 30
+          containers:
+            - name: ecr-cred-helper
+              image: bloveless/ecr-credential-helper:0.6.0-rust
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: AWS_ACCOUNT_ID
+                  value: "3xxxxxxxxxx6"
+                - name: AWS_DEFAULT_REGION
+                  value: us-west-2
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: aws-access-keys-secret
+                      key: secretAccessKey
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: aws-access-keys-secret
+                      key: accessKeyId
+                - name: EMAIL
+                  value: brennon.loveless@gmail.com 
+                - name: NAMESPACES
+                  value: "namespace1,namespace2,namespace3"
