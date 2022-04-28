@@ -32,7 +32,7 @@ if [ "${uid}" = "0" ]; then
 fi
 
 if [ "$1" = "restore" ]; then
-    exec ${command_prefix} pgbackrest --stanza=pg --log-level-console=info restore
+     eval "${command_prefix} pgbackrest --stanza=pg --log-level-console=info restore"
     return_val="$?"
     echo "Return value: ${return_val}"
     if [ "${return_val}" = "40" ]; then
@@ -43,12 +43,12 @@ if [ "$1" = "restore" ]; then
         echo "Restore was successful"
     fi
 elif [ "$1" = "full-backup" ]; then
-    exec ${command_prefix} pgbackrest --stanza=pg --log-level-console=info --type=full backup
+    eval "${command_prefix} pgbackrest --stanza=pg --log-level-console=info --type=full backup"
     if [ "$?" = "0" ]; then
         echo "Full backup was successful"
     fi
 elif [ "$1" = "diff-backup" ]; then
-    exec ${command_prefix} pgbackrest --stanza=pg --log-level-console=info --type=diff backup
+    eval "${command_prefix} pgbackrest --stanza=pg --log-level-console=info --type=diff backup"
     if [ "$?" = "0" ]; then
         echo "Differential backup was successful"
     fi
