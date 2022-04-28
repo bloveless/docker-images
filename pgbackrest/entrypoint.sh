@@ -33,11 +33,13 @@ fi
 
 if [ "$1" = "restore" ]; then
     exec ${command_prefix} pgbackrest --stanza=pg --log-level-console=info restore
-    if [ "$?" = "40" ]; then
+    return_val="$?"
+    echo "Return value: ${return_val}"
+    if [ "${return_val}" = "40" ]; then
         echo "Restore failed because there are already files. Assuming that everything is okay and moving on. If you need to perform a restore then delete all the postgres data files and attempt the restore again"
         exit 0
     fi
-    if [ "$?" = "0" ]; then
+    if [ "${return_val}" = "0" ]; then
         echo "Restore was successful"
     fi
 elif [ "$1" = "full-backup" ]; then
