@@ -9,14 +9,19 @@ FROM debian:bullseye-slim as builder
 
 ARG PGBACKREST_TAG
 
-RUN mkdir /build
+RUN mkdir /build && mkdir /build-scheduler
 
 WORKDIR /build
 
 RUN apt update \
     && apt-get install -y make gcc libpq-dev libssl-dev libxml2-dev pkg-config \
        liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -L --output /root/go1.18.1.linux-arm64.tar.gz https://go.dev/dl/go1.18.1.linux-arm64.tar.gz \
+    && rm -rf /usr/local/go \
+    && tar -C /usr/local -xzf /root/go1.18.1.linux-arm64.tar.gz
+
+ENV PATH=$PATH:/usr/local/go/bin
 
 RUN curl -sL \
        https://github.com/pgbackrest/pgbackrest/archive/release/${PGBACKREST_TAG}.tar.gz | \
@@ -25,6 +30,12 @@ RUN curl -sL \
 WORKDIR /build/pgbackrest-release-${PGBACKREST_TAG}/src
 
 RUN ./configure && make
+
+WORKDIR /build-scheduler
+
+COPY ./main.go ./go.mod ./go.sum ./
+
+RUN go build -o scheduler .
 
 FROM debian:bullseye-slim
 
@@ -66,6 +77,7 @@ RUN apt-get update \
 
 COPY entrypoint.sh /entrypoint.sh
 COPY --from=builder /build/pgbackrest-release-${PGBACKREST_TAG}/src/pgbackrest /usr/local/bin/pgbackrest
+COPY --from=builder /build-scheduler/scheduler /usr/local/bin/scheduler
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]

@@ -42,16 +42,13 @@ if [ "$1" = "restore" ]; then
     if [ "${return_val}" = "0" ]; then
         echo "Restore was successful"
     fi
-elif [ "$1" = "full-backup" ]; then
-    eval "${command_prefix} pgbackrest --stanza=pg --log-level-console=info --type=full backup"
-    if [ "$?" = "0" ]; then
-        echo "Full backup was successful"
-    fi
-elif [ "$1" = "diff-backup" ]; then
-    eval "${command_prefix} pgbackrest --stanza=pg --log-level-console=info --type=diff backup"
-    if [ "$?" = "0" ]; then
-        echo "Differential backup was successful"
-    fi
+elif [ "$1" = "cron" ]; then
+    # Run full backup every saturday at 2:20 am
+    echo "20 2 * * 6 /usr/local/bin/pgbackrest --stanza=pg --log-level-console=info --type=full backup" >> /home/postgres/schedule
+    # Run diff backup every hour on the 40's
+    echo "40 * * * * /usr/local/bin/pgbackrest --stanza=pg --log-level-console=info --type=diff backup" >> /home/postgres/schedule
+    echo "Starting backup cron"
+    exec scheduler /home/postgres/schedule
 else
     exec ${command_prefix} "$@"
 fi
