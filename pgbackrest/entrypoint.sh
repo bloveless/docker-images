@@ -31,6 +31,8 @@ if [ "${uid}" = "0" ]; then
     command_prefix="gosu ${BACKREST_USER}"
 fi
 
+eval "${command_prefix} pgbackrest --stanza=pg --log-level-console=info stanza-create"
+
 if [ "$1" = "restore" ]; then
      eval "${command_prefix} pgbackrest --stanza=pg --log-level-console=info restore"
     return_val="$?"
