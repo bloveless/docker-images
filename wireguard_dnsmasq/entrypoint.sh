@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # copied from https://github.com/k8s-at-home/container-images/blob/main/apps/wireguard/entrypoint.sh
 
-set -ex
+set -v -e -x
 
 INTERFACE_UP=false
+SEPARATOR=${SEPARATOR:- }
 
 _shutdown () {
     local exitCode=$?
@@ -23,10 +24,7 @@ trap _shutdown EXIT
 
 #Get K8S DNS
 K8S_DNS=$(grep nameserver /etc/resolv.conf | cut -d' ' -f2)
-K8S_GW_IP=$(/sbin/ip route | awk '/default/ { print $3 }')
-
 echo "K8S_DNS ${K8S_DNS}"
-echo "K8S_GW_IP ${K8S_GW_IP}"
 
 source "/shim/iptables-backend.sh"
 
@@ -38,7 +36,7 @@ fi
 
 CONFIG=`echo $CONFIGS | head -n 1`
 INTERFACE="${CONFIG%.*}"
-NAMESERVERS=$(/usr/local/bin/get_nameservers.pl /etc/wireguard/${CONFIG})
+NAMESERVERS=$(/usr/local/bin/get_nameservers.pl "/etc/wireguard/${CONFIG}" "${SEPARATOR}")
 
 echo "Using wireguard nameservers ${NAMESERVERS}"
 
@@ -66,7 +64,9 @@ clear-on-reload
 resolv-file=/etc/resolv_copy.conf
 EOF
 
-for nameserver in "${NAMESERVERS}"; do
+
+IFS="${SEPARATOR}" read -r -a nameservers <<< "${NAMESERVERS}"
+for nameserver in "${nameservers[@]}"; do
   cat << EOF >> /etc/dnsmasq.d/local-k8s.conf
   # Setup the default wireguard nameserver: ${nameserver}
   server=${nameserver}
@@ -82,21 +82,6 @@ for local_cidr in "${locals[@]}"; do
 EOF
 done
 
-echo "Monitoring for changes in /etc/resolv.conf"
-cp /etc/resolv.conf /etc/resolv_copy.conf
-while inotifywait -e modify -e attrib /etc/resolv.conf; do
-    echo "Detected changes in /etc/resolv.conf... copying to /etc/resolv_copy.conf"
-    cp /etc/resolv.conf /etc/resolv_copy.conf
-done
-
-cat /etc/resolv.conf
-
-# Set it so the containers will use the localhost dnsmasq as the default dns server
-sed -i "s:\#name_servers=127.0.0.1:name_servers=127.0.0.1:g" /etc/resolvconf.conf
-
-# Update the resolv.conf file to use localhost as the nameserver
-resolvconf -u
-
 # Dnsmasq daemon
 dnsmasq -k &
 dnsmasq=$!
@@ -107,8 +92,21 @@ _kill_procs() {
   wait $dnsmasq
 }
 
+# Set it so the containers will use the localhost dnsmasq as the default dns server
+sed -i "s:\#name_servers=127.0.0.1:name_servers=127.0.0.1:g" /etc/resolvconf.conf
+
+# Update the resolv.conf file to use localhost as the nameserver
+resolvconf -u
+
 # Setup a trap to catch SIGTERM and relay it to child processes
 trap _kill_procs SIGTERM
+
+echo "Monitoring for changes in /etc/resolv.conf"
+cp /etc/resolv.conf /etc/resolv_copy.conf
+while inotifywait -e modify -e attrib /etc/resolv.conf; do
+    echo "Detected changes in /etc/resolv.conf... copying to /etc/resolv_copy.conf"
+    cp /etc/resolv.conf /etc/resolv_copy.conf
+done
 
 #Wait for dnsmasq
 wait $dnsmasq

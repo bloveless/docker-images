@@ -3,8 +3,12 @@ use warnings;
 use strict;
 
 my @nameservers = ();
+my $filename = $ARGV[0];
+my $separator = $ARGV[1];
 
-while(<>){
+open(FH, '<', $filename) or die $!;
+
+while(<FH>){
   my @tokens = split /[ ,]/, $_;
 
   # If we found the DNS key
@@ -21,4 +25,6 @@ while(<>){
   }
 }
 
-print join ' ', @nameservers
+close(FH);
+
+print join $separator, @nameservers;
