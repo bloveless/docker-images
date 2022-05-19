@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sealed-secrets-master-key-backup
+  labels:
+    app: sealed-secrets-master-key-backup
+    component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sealed-secrets-master-key-backup
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: sealed-secrets-master-key-backup
+        component: worker
+    spec:
+      containers:
+      - name: sealed-secrets-master-key-backup
+        image: bloveless/sealed-secrets-master-key-backup
+
