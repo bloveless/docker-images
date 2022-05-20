@@ -48,6 +48,8 @@ func main() {
 
 		log.Println(string(secretsBytesYaml))
 
+		fmt.Println("----------------------------------")
+
 		time.Sleep(10 * time.Second)
 	}
 }
