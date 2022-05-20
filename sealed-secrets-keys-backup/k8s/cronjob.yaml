@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sealed-secrets-keys-backup
+  namespace: sealed-secrets-keys-backup
+  labels:
+    app: sealed-secrets-keys-backup
+    component: backup-cronjob
+spec:
+  schedule: "0 0 1,15 * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: sealed-secrets-keys-backup
+          containers:
+          - name: sealed-secrets-keys-backup
+            image: bloveless/sealed-secrets-keys-backup
+            volumeMounts:
+            - name: backups
+              mountPath: /backups
+          volumes:
+          - name: backups
+            persistentVolumeClaim:
+              claimName: sealed-secrets-keys-backup-backups
+          restartPolicy: OnFailure
+
+

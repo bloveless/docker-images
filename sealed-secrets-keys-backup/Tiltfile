@@ -17,7 +17,7 @@ docker_build_with_restart(
   'bloveless/sealed-secrets-keys-backup',
   context='.',
   entrypoint=['/app/sealed-secrets-keys-backup'],
-  dockerfile='Dockerfile',
+  dockerfile='Dockerfile.tilt',
   only=[
     './build',
   ],

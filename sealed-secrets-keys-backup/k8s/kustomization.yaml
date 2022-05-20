@@ -3,4 +3,9 @@ resources:
 - rbac.yaml
 - pv.yaml
 - pvc.yaml
-- deployment.yaml
+- cronjob.yaml
+
+images:
+- name: bloveless/sealed-secrets-keys-backup
+  newName: bloveless/sealed-secrets-keys-backup
+  newTag: 0.1.0
