@@ -1,0 +1,32 @@
+# -*- mode: Python -*-
+
+# For more on Extensions, see: https://docs.tilt.dev/extensions.html
+load('ext://restart_process', 'docker_build_with_restart')
+
+allow_k8s_contexts('admin@demon-k8s')
+
+compile_cmd = 'GOOS=linux GOARCH=arm64 go build -o build/sealed-secrets-keys-backup ./'
+
+local_resource(
+  'go-compile',
+  compile_cmd,
+  deps=['./main.go'],
+)
+
+docker_build_with_restart(
+  'bloveless/sealed-secrets-keys-backup',
+  context='.',
+  entrypoint=['/app/sealed-secrets-keys-backup'],
+  dockerfile='Dockerfile',
+  only=[
+    './build',
+  ],
+  live_update=[
+    sync('./build', '/app'),
+  ],
+  platform='linux/arm64'
+)
+
+k8s_yaml(kustomize('./k8s'))
+k8s_resource('sealed-secrets-keys-backup', resource_deps=['go-compile'])
+
