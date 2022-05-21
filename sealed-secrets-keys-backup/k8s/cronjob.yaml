@@ -2,7 +2,6 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: sealed-secrets-keys-backup
-  namespace: sealed-secrets-keys-backup
   labels:
     app: sealed-secrets-keys-backup
     component: backup-cronjob

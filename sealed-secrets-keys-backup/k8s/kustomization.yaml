@@ -1,5 +1,6 @@
+namespace: kube-system
+
 resources:
-- namespace.yaml
 - rbac.yaml
 - pv.yaml
 - pvc.yaml
