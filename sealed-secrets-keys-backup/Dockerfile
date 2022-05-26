@@ -24,7 +24,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o ./build/sealed-secrets-keys-backup .
+RUN go build -o ./build/sealed-secrets-keys-backup . && chmod 544 ./build/sealed-secrets-keys-backup
 
 FROM ubuntu:22.04
 
@@ -32,7 +32,7 @@ RUN mkdir /app
 
 WORKDIR /app
 
-COPY --from=builder --chmod=544 /app/build/sealed-secrets-keys-backup /app/sealed-secrets-keys-backup
+COPY --from=builder /app/build/sealed-secrets-keys-backup /app/sealed-secrets-keys-backup
 
 ENTRYPOINT ["/app/sealed-secrets-keys-backup"]
 
