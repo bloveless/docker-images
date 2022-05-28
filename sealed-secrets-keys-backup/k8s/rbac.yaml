@@ -2,10 +2,9 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: sealed-secrets-keys-backup
-  namespace: sealed-secrets-keys-backup
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: sealed-secrets-keys-reader
 rules:
@@ -17,12 +16,10 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: sealed-secrets-keys-reader
-  namespace: kube-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
+  kind: Role
   name: sealed-secrets-keys-reader
 subjects:
 - kind: ServiceAccount
   name: sealed-secrets-keys-backup
-  namespace: sealed-secrets-keys-backup

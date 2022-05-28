@@ -1,9 +1,10 @@
+namespace: kube-system
+
 resources:
-- namespace.yaml
 - rbac.yaml
 - pv.yaml
 - pvc.yaml
-- deployment.yaml
+- cronjob.yaml
 
 images:
 - name: bloveless/sealed-secrets-keys-backup
