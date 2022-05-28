@@ -4,3 +4,8 @@ resources:
 - pv.yaml
 - pvc.yaml
 - deployment.yaml
+
+images:
+- name: bloveless/sealed-secrets-keys-backup
+  newName: bloveless/sealed-secrets-keys-backup
+  newTag: 0.1.0
