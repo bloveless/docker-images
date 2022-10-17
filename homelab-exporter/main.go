@@ -1,19 +1,3 @@
-// Copyright 2015 The Prometheus Authors
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// A simple example exposing fictional RPC latencies with different types of
-// random distributions (uniform, normal, and exponential) as Prometheus
-// metrics.
 package main
 
 import (
@@ -64,7 +48,7 @@ type GetStatusReponse struct {
 
 func main() {
 	var (
-		addr = flag.String("listen-address", ":8080", "The address to listen on for HTTP requests.")
+		addr = flag.String("listen-address", "0.0.0.0:8080", "The address to listen on for HTTP requests.")
 	)
 
 	flag.Parse()
@@ -72,34 +56,35 @@ func main() {
 	var (
 		voltageGauge = prometheus.NewGauge(
 			prometheus.GaugeOpts{
-				Name: "homelab_power_voltage_volts",
-				Help: "",
+				Name: "homelab_power_volts",
+				Help: "Last measured voltage (Volts) of the homelab",
 			},
 		)
 		amperageGauge = prometheus.NewGauge(
 			prometheus.GaugeOpts{
-				Name: "homelab_power_amerage_amps",
-				Help: "",
+				Name: "homelab_power_amps",
+				Help: "Last measured amerage (Amperes) of the homelab",
 			},
 		)
 		temperatureGauge = prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Name: "homelab_power_temperature_f",
-				Help: "",
+				Help: "Last measured temperature of the power meter (Fahrenheit)",
 			},
 		)
 		powerGauge = prometheus.NewGauge(
 			prometheus.GaugeOpts{
-				Name: "homelab_power_watt_hours",
-				Help: "",
+				Name: "homelab_power_watts",
+				Help: "Last measured instantaneous active power (Watts) delivered to the attached load",
 			},
 		)
 		powerCounter = prometheus.NewGauge(
 			prometheus.GaugeOpts{
-				Name: "homelab_power_watts_counter",
-				Help: "",
+				Name: "homelab_power_watt_hours_total",
+				Help: "Total energy consumed in Watt-hours",
 			},
 		)
+		lastPowerReading = 0.00
 	)
 
 	// Register the summary and the histogram with Prometheus's default registry.
@@ -138,8 +123,10 @@ func main() {
 			amperageGauge.Set(sr.Current)
 			temperatureGauge.Set(sr.Temperature.TF)
 			powerGauge.Set(sr.APower)
+			powerCounter.Add(sr.AEnergy.Total - lastPowerReading)
 
-			time.Sleep(10 * time.Second)
+			lastPowerReading = sr.AEnergy.Total
+			time.Sleep(5 * time.Second)
 		}
 	}()
 
