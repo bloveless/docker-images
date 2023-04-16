@@ -1,35 +1,64 @@
-{ pkgs ? import <nixpkgs> {} }:
-  pkgs.mkShell rec {
-    buildInputs = with pkgs; [
-      # clang
-      # llvmPackages.bintools
-      # rustup
-      pkg-config
-      openssl
-    ];
-    # RUSTC_VERSION = pkgs.lib.readFile ./rust-toolchain;
-    # # https://github.com/rust-lang/rust-bindgen#environment-variables
-    # LIBCLANG_PATH = pkgs.lib.makeLibraryPath [ pkgs.llvmPackages_latest.libclang.lib ];
-    # shellHook = ''
-    #   export PATH=$PATH:''${CARGO_HOME:-~/.cargo}/bin
-    #   export PATH=$PATH:''${RUSTUP_HOME:-~/.rustup}/toolchains/$RUSTC_VERSION-x86_64-unknown-linux-gnu/bin/
-    #   '';
-    # Add libvmi precompiled library to rustc search path
-    RUSTFLAGS = (builtins.map (a: ''-L ${a}/lib'') [
-      pkgs.openssl.dev
-    ]);
+let
+# Mozilla Overlay
+moz_overlay = import (
+  builtins.fetchTarball
+    "https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz"
+);
 
-    # BINDGEN_EXTRA_CLANG_ARGS =
-    # # # Includes with normal include path
-    # (builtins.map (a: ''-I"${a}/include"'') [
-    #   # pkgs.libvmi
-    #   # pkgs.glibc.dev
-    #   pkgs.openssl.dev
-    # ]);
-    # # Includes with special directory paths
-    # ++ [
-    #   ''-I"${pkgs.llvmPackages_latest.libclang.lib}/lib/clang/${pkgs.llvmPackages_latest.libclang.version}/include"''
-    #   ''-I"${pkgs.glib.dev}/include/glib-2.0"''
-    #   ''-I${pkgs.glib.out}/lib/glib-2.0/include/''
-    # ];
-  }
+nixpkgs = import (builtins.fetchTarball https://github.com/NixOS/nixpkgs/archive/22.05.tar.gz) {
+  overlays = [ moz_overlay ];
+  config = {};
+};
+
+frameworks = nixpkgs.darwin.apple_sdk.frameworks;
+rust =
+  (nixpkgs.rustChannelOf {
+    rustToolchain = ./rust-toolchain;
+  }).rust.override {
+    extensions = [
+      "clippy-preview"
+      "rust-src"
+    ];
+  };
+
+in
+with nixpkgs;
+
+stdenv.mkDerivation {
+  name = "wilspi-rust-env";
+  buildInputs = [ rust ];
+
+  nativeBuildInputs = [
+    clang
+    llvm
+    zsh
+    vim
+    openssl
+    pkg-config
+  ] ++ (
+    lib.optionals stdenv.isDarwin [
+      frameworks.Security
+      frameworks.CoreServices
+      frameworks.CoreFoundation
+      frameworks.Foundation
+    ]
+  );
+
+  # ENV Variables
+  RUST_BACKTRACE = 1;
+  SOURCE_DATE_EPOCH = 315532800;
+  LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
+
+  # Post Shell Hook
+  shellHook = ''
+    echo "Using ${rust.name}"
+
+  '' + (
+    if !pkgs.stdenv.isDarwin then
+      ""
+    else ''
+      # Cargo wasn't able to find CF during a `cargo test` run on Darwin.
+      export NIX_LDFLAGS="-F${frameworks.CoreFoundation}/Library/Frameworks -framework CoreFoundation $NIX_LDFLAGS";
+    ''
+  );
+}
