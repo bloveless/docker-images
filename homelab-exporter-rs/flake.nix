@@ -13,7 +13,7 @@
           inherit system overlays;
         };
         frameworks = pkgs.darwin.apple_sdk.frameworks;
-        rust = pkgs.rust-bin.stable.latest.default.override {
+        rust = (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain ).override {
             extensions = [
               "clippy-preview"
               "rust-src"
