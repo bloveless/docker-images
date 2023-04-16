@@ -22,7 +22,7 @@
     # Includes with normal include path
     (builtins.map (a: ''-I"${a}/include"'') [
       # pkgs.libvmi
-      pkgs.glibc.dev 
+      # pkgs.glibc.dev 
       # pkgs.openssl.dev 
     ])
     # Includes with special directory paths
