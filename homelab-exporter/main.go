@@ -54,6 +54,8 @@ func main() {
 
 	flag.Parse()
 
+	log.Printf("Config - listen address: %s switch address: %s", *listenAddr, *switchAddr)
+
 	var (
 		voltageGauge = prometheus.NewGauge(
 			prometheus.GaugeOpts{

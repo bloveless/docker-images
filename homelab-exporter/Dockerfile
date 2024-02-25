@@ -5,13 +5,13 @@ WORKDIR /app
 
 COPY . /app
 
-RUN go build -o homelab_exporter ./...
+RUN go build -o homelab-exporter ./...
 
 FROM debian:bullseye-slim
 
 RUN mkdir /app
 WORKDIR /app
 
-COPY --from=builder /app/homelab_exporter /app/homelab_exporter
+COPY --from=builder /app/homelab-exporter /app/homelab-exporter
 
-CMD ["/app/homelab_exporter"]
+CMD ["/app/homelab-exporter"]
