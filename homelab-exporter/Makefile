@@ -1,4 +1,4 @@
-TAG=0.1.0
+TAG=0.3.0
 
 build:
 	docker build -t bloveless/homelab-exporter:$(TAG) .

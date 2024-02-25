@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -48,7 +48,8 @@ type GetStatusReponse struct {
 
 func main() {
 	var (
-		addr = flag.String("listen-address", "0.0.0.0:8080", "The address to listen on for HTTP requests.")
+		listenAddr = flag.String("listen-address", "0.0.0.0:8080", "The address to listen on for HTTP requests.")
+		switchAddr = flag.String("switch-address", "0.0.0.0", "The address to where the shelly switch can be polled.")
 	)
 
 	flag.Parse()
@@ -99,12 +100,12 @@ func main() {
 	// Periodically record some sample latencies for the three services.
 	go func() {
 		for {
-			resp, err := http.Get("http://192.168.4.220/rpc/Switch.GetStatus?id=0")
+			resp, err := http.Get(fmt.Sprintf("http://%s/rpc/Switch.GetStatus?id=0", *switchAddr))
 			if err != nil {
 				panic(err)
 			}
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				panic(err)
 			}
@@ -138,6 +139,6 @@ func main() {
 			EnableOpenMetrics: true,
 		},
 	))
-	fmt.Printf("Listening on %v\n", *addr)
-	log.Fatal(http.ListenAndServe(*addr, nil))
+	fmt.Printf("Listening on %v\n", *listenAddr)
+	log.Fatal(http.ListenAndServe(*listenAddr, nil))
 }
